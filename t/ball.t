@@ -5,7 +5,7 @@ use Test::Mojo;
 use Laserpong::Game::Ball;
 
 my $t = Test::Mojo->new('Laserpong');
-my $ball = Laserpong::Game::Ball->new(1, 2, 5, 5);
+my $ball = Laserpong::Game::Ball->new({x => 1, y => 2, xVel => 5, yVel => 5});
 
 is $ball->x, 1;
 is $ball->y, 2;

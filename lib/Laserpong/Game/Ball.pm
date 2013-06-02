@@ -1,19 +1,22 @@
 package Laserpong::Game::Ball;
 use Mojo::Base 'Laserpong::Game::Entity';
 
-use constant radius => 1;
-
+has radius => 1;
 has name => 'Ball';
 has boundingShape => 'circle';
 has yVelMax => sub {
-    my $self = shift;
-    return $self->yVel * 5;
+    return shift->yVel * 5;
 };
 
-#sig: Ball->new(x, y, xVel, yVel)
-sub new {
-    my $self = shift->SUPER::new(@_, radius, 'bogus');
-    return $self;
+has [qw(width height)] => sub {
+    shift->radius * 2;
+};
+
+sub update {
+    my $self = shift;
+    my $dt = shift;
+    $self->x($self->x + $self->xVel * $dt);
+    $self->y($self->y + $self->yVel * $dt);
 }
 
 1;

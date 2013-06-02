@@ -16,12 +16,17 @@ use constant yVel => 66.67;
 has name => 'Player';
 has laserBank => 10;
 
-#sig: Player->new(x, y);
+#sig: Player->new(x, y, team);
 sub new {
-    my $self = shift->SUPER::new(@_, 0, yVel, width, startingHeight);
-    $self->{moveQueue} = [];
-    $self->{lasers} = [];
-    $self->{laserBank} = 10;
+    my $class = shift;
+    my $params = shift;
+    $params->{moveQueue} = [];
+    $params->{lasers} = [];
+    $params->{yVel} = yVel;
+    $params->{height} = startingHeight;
+    $params->{width} = width;
+
+    my $self = $class->SUPER::new($params);
     return $self;
 }
 
@@ -43,6 +48,10 @@ sub update {
     if ($y < $self->height / 2) {
         $self->y($self->height / 2);
     }
+
+    foreach my $laser (@{$self->{lasers}}) {
+        $laser->update($dt);
+    }
 }
 
 sub moveUp {
@@ -58,6 +67,7 @@ sub moveDown {
 sub fireLaser {
     my $self = shift;
     $self->{laserBank}--;
+    push $self->{lasers}, Laserpong::Game::Laser->new({x => $self->x, y => $self->y, team => $self->team});
 }
 
 1;
