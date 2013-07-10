@@ -15,21 +15,23 @@ is $player->height, 13.35;
 is $player->laserBank, 10;
 
 # Update without moving, make sure position doesn't change.
+my $startY = $player->y;
 $player->update(0.01);
 
 is $player->x, 1;
-is $player->y, 50.6667;
+is $player->y, $startY;
 
 # Move up (y goes down), check for correct position.
+my $newY = $player->y - $player->yVel * 0.01;
 $player->moveUp();
 $player->update(0.01);
 is $player->x, 1;
-is $player->y, 50;
+is $player->y, $newY;
 
 # Move down (y goes up), check for correct position.
 $player->moveDown();
 $player->update(0.01);
-is $player->y, 50.6667;
+is $player->y, $startY;
 
 # Fire a laser, make sure the bank is now lower.
 $player->fireLaser();
@@ -39,14 +41,16 @@ is $player->laserBank, 9;
 # Should lock player->y to height / 2
 $player->moveUp();
 $player->update(1);
-is $player->y, 6.675;
+my $halfHeight = $player->height / 2;
+is $player->y, $halfHeight;
 
 # Try to move off the map in the other direction 
 # (off the bottom, which means y > 100)
+my $maxY = 100 - $player->height / 2;
 $player->moveDown();
 $player->update(1);
 $player->moveDown();
 $player->update(1);
-is $player->y, 93.325;
+is $player->y, $maxY;
 
 done_testing();

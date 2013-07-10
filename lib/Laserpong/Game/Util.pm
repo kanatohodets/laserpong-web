@@ -7,11 +7,11 @@ sub collide {
     my ($entityA, $entityB) = @_;
     my ($typeA, $typeB) = ($entityA->boundingShape, $entityB->boundingShape);
 
-    return circlesCollide(@_) if $typeA eq $typeB and $typeB eq 'circle';
-    return rectsCollide(@_);
+    return _circlesCollide(@_) if $typeA eq $typeB and $typeB eq 'circle';
+    return _rectsCollide(@_);
 }
 
-sub rectsCollide {
+sub _rectsCollide {
     my ($a, $b) = @_;
     my ($leftA, $topA, $wA, $hA) = ($a->left, $a->top, $a->width, $a->height);
     my ($leftB, $topB, $wB, $hB) = ($b->left, $b->top, $b->width, $b->height);
@@ -24,7 +24,7 @@ sub rectsCollide {
     return 1;
 }
 
-sub circlesCollide {
+sub _circlesCollide {
     my ($a, $b) = @_;
     my ($xA, $yA, $rA) = ($a->x, $a->y, $a->radius);
     my ($xB, $yB, $rB) = ($b->x, $b->y, $b->radius);
