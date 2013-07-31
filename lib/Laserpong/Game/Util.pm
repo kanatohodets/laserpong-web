@@ -4,34 +4,34 @@ use Mojo::Base 'Exporter';
 our @EXPORT_OK = qw(collide);
 
 sub collide {
-    my ($entityA, $entityB) = @_;
-    my ($typeA, $typeB) = ($entityA->boundingShape, $entityB->boundingShape);
+    my ($entity_a, $entity_b) = @_;
+    my ($type_a, $type_b) = ($entity_a->bounding_shape, $entity_b->bounding_shape);
 
-    return _circlesCollide(@_) if $typeA eq $typeB and $typeB eq 'circle';
-    return _rectsCollide(@_);
+    return _circles_collide(@_) if $type_a eq $type_b and $type_b eq 'circle';
+    return _rects_collide(@_);
 }
 
-sub _rectsCollide {
+sub _rects_collide {
     my ($a, $b) = @_;
-    my ($leftA, $topA, $wA, $hA) = ($a->left, $a->top, $a->width, $a->height);
-    my ($leftB, $topB, $wB, $hB) = ($b->left, $b->top, $b->width, $b->height);
+    my ($left_a, $top_a, $width_a, $height_a) = ($a->left, $a->top, $a->width, $a->height);
+    my ($left_b, $top_b, $width_b, $height_b) = ($b->left, $b->top, $b->width, $b->height);
 
-    return 0 if $topA > $topB + $hB;
-    return 0 if $topB > $topA + $hA;
-    return 0 if $leftA > $leftB + $wB;
-    return 0 if $leftB > $leftA + $wA;
+    return 0 if $top_a > $top_b + $height_b;
+    return 0 if $top_b > $top_a + $height_a;
+    return 0 if $left_a > $left_b + $width_b;
+    return 0 if $left_b > $left_a + $width_a;
 
     return 1;
 }
 
-sub _circlesCollide {
+sub _circles_collide {
     my ($a, $b) = @_;
-    my ($xA, $yA, $rA) = ($a->x, $a->y, $a->radius);
-    my ($xB, $yB, $rB) = ($b->x, $b->y, $b->radius);
+    my ($x_a, $y_a, $radius_a) = ($a->x, $a->y, $a->radius);
+    my ($x_b, $y_b, $radius_b) = ($b->x, $b->y, $b->radius);
 
-    my $dist = sqrt((($xA - $xB) ** 2) + ($yA - $yB) ** 2);
+    my $dist = sqrt((($x_a - $x_b) ** 2) + ($y_a - $y_b) ** 2);
 
-    return 0 if $dist > $rA + $rB;
+    return 0 if $dist > $radius_a + $radius_b;
 
     return 1;
 }

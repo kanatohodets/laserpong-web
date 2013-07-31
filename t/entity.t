@@ -12,16 +12,16 @@ is $entity->y, 2;
 is $entity->team, -1;
 
 #configure the entity like a subclass would.
-$entity->xVel(5);
-$entity->yVel(3);
+$entity->x_vel(5);
+$entity->y_vel(3);
 $entity->width(10);
 $entity->height(6);
 
-is $entity->xVel, 5;
-is $entity->yVel, 3;
+is $entity->x_vel, 5;
+is $entity->y_vel, 3;
 is $entity->width, 10;
 is $entity->height, 6;
-is $entity->boundingShape, 'rect';
+is $entity->bounding_shape, 'rect';
 
 is $entity->left, -4;
 is $entity->top, -1;
