@@ -2,40 +2,50 @@ package Laserpong::Game::Paddle;
 use Mojo::Base 'Laserpong::Game::Entity';
 use Data::Dumper;
 use Laserpong::Game::Laser;
+use Laserpong::Game::Util qw(collide);
 
-use constant min_height => 2;
-use constant hit_penalty => 0.5;
-use constant laser_max => 8;
-use constant heal_wait => 1;
-use constant heal_amount => 0.25;
+use constant MIN_HEIGHT => 2;
+use constant HIT_PENALTY => 0.5;
+use constant LASER_MAX => 8;
+use constant HEAL_WAIT => 1;
+use constant HEAL_AMOUNT => 0.25;
 
-use constant width => 1.35;
-use constant starting_height => 13.35;
-use constant y_vel => 66.67;
+use constant WIDTH => 1.35;
+use constant STARTING_HEIGHT => 2; #13.35;
+use constant Y_VEL => 66.67;
 
 has name => 'Paddle';
 has laser_bank => 10;
 has player_id => -1;
 
+sub initialize {
+    my $self = shift;
+    $self->{move_queue} = [];
+    $self->{lasers} = [];
+    $self->{y_vel} = Y_VEL;
+    $self->{height} = STARTING_HEIGHT;
+    $self->{width} = WIDTH;
+
+    if ($self->team == 0) {
+        $self->x(10);
+    } else {
+        $self->x(90);
+    }
+    $self->y(50);
+    print $self->player_id . " init, with x of " . $self->x . " and y of " . $self->y . "\n";
+}
+
 #sig: Paddle->new(team, player_id);
 sub new {
-    my $class = shift;
-    my $params = shift;
-    $params->{move_queue} = [];
-    $params->{lasers} = [];
-    $params->{y_vel} = y_vel;
-    $params->{height} = starting_height;
-    $params->{width} = width;
-
-    my $self = $class->SUPER::new($params);
+    my $self = shift->SUPER::new(@_);
+    $self->initialize();
     return $self;
 }
 
 sub update {
-    my $self = shift;
-    my $dt = shift;
-    my $frame = shift;
+    my ($self, $dt, $frame, $ball) = @_;
     my ($id, $x, $y) = ($self->player_id, $self->x, $self->y);
+
     print "frame: $frame player $id update: $x, $y\n";
 
     if (scalar @{$self->{move_queue}} > 0) {
@@ -51,6 +61,10 @@ sub update {
 
     if ($y < $self->height / 2) {
         $self->y($self->height / 2);
+    }
+
+    if (collide($self, $ball)) {
+        $ball->hit_paddle($self->y);
     }
 
     foreach my $laser (@{$self->{lasers}}) {

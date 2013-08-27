@@ -21,7 +21,7 @@ sub startup {
     # Normal route to controller
     $r->get('/')->to(cb => sub {
       my $self = shift;
-      $self->render(text => "hi!");
+      $self->render('game/index');
     });
 
     $r->websocket('/game')->to(cb => sub {
@@ -34,12 +34,17 @@ sub startup {
 
             $self->app->log->debug("new player ID from redis: $new_player_id");
             $self->app->log->debug("waiting players: @waiting_players");
+
             if (scalar @waiting_players > 0) {
+
                 $self->app->log->debug("waiting player found, creating new game");
+
                 $redis->incr(game_id => sub {
                     my ($redis, $new_game_id) = @_;
                     my $waiting_player_id = pop @waiting_players;
+
                     $self->app->log->debug("ids: waiting: $waiting_player_id new: $new_player_id game: $new_game_id");
+
                     push @games, Laserpong::Game->new({player_ids => [$new_player_id, $waiting_player_id], game_id => $new_game_id});
                 });
             } else {

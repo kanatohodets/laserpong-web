@@ -1,0 +1,3 @@
+% layout 'default';
+% title 'GAME';
+%= javascript '/js/test.js';
