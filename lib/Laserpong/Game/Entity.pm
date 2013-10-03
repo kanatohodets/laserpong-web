@@ -41,7 +41,7 @@ sub guts {
 }
 
 sub TO_JSON {
-    return shift->guts;
+    return {shift->guts};
 }
 
 1;
