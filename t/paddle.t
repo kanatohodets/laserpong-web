@@ -14,7 +14,6 @@ is $paddle->x_vel, 0;
 is $paddle->y_vel, 66.67;
 is $paddle->width, 1.35;
 is $paddle->height, 2;
-is $paddle->laser_bank, 10;
 is $paddle->player_id, 4;
 
 # Update without moving, make sure position doesn't change.
@@ -37,7 +36,8 @@ is $paddle->y, $start_y;
 
 # Fire a laser, make sure the bank is now lower.
 $paddle->fire_laser();
-is $paddle->laser_bank, 9;
+my $lasers = $paddle->lasers;
+is scalar @$lasers, 1;
 
 # Try to move off the map (note the delta time given to update)
 # Should lock paddle->y to height / 2
