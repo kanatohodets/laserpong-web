@@ -97,5 +97,4 @@ sub hit_paddle {
     $self->y_vel($x_vel);
 }
 
-
 1;

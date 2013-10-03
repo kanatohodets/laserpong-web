@@ -2,17 +2,17 @@ package Laserpong;
 use Mojo::Base 'Mojolicious';
 use Mojo::Redis;
 use Mojo::JSON;
-use Mojo::IOLoop;
 
 use Laserpong::Game;
+use Laserpong::Player;
 
 # This method will run once at server start
 sub startup {
     my $controller = shift;
     my $json = Mojo::JSON->new;
-    my $redis = Mojo::Redis->new(server => 'localhost:6379');
 
     my @games = ();
+    my $players = {};
     my @waiting_players = ();
 
     # Router
@@ -25,46 +25,39 @@ sub startup {
     });
 
     $r->websocket('/game')->to(cb => sub {
-        my $self = shift;
-        my $pub = Mojo::Redis->new;
+        my $websocket = shift;
+        my $redis = Mojo::Redis->new(server => 'localhost:6379');
+        say "hey hey got a new websocket connection";
 
-        $self->app->log->debug('websocket hit to /game');
         $redis->incr(player_id => sub {
-            my ($redis, $new_player_id) = @_;
-
-            $self->app->log->debug("new player ID from redis: $new_player_id");
-            $self->app->log->debug("waiting players: @waiting_players");
+            shift; #discard redis, already have it.
+            my $new_player_id = shift;
+            my $player = Laserpong::Player->new({id => $new_player_id, ws => $websocket, redis => $redis});
+            $$players{$new_player_id} = $player;
 
             if (scalar @waiting_players > 0) {
-
-                $self->app->log->debug("waiting player found, creating new game");
-
+                say "found a waiting player";
                 $redis->incr(game_id => sub {
-                    my ($redis, $new_game_id) = @_;
-                    my $waiting_player_id = pop @waiting_players;
+                    shift;
+                    my $new_game_id = shift;
 
-                    $self->app->log->debug("ids: waiting: $waiting_player_id new: $new_player_id game: $new_game_id");
+                    say "new game ID: $new_game_id";
+                    #todo: use redis instead of local data structure
+                    my $waiting_player = pop @waiting_players;
 
-                    push @games, Laserpong::Game->new({player_ids => [$new_player_id, $waiting_player_id], game_id => $new_game_id});
+                    say "waiting player:  . " . $waiting_player->id . ". notifying about a game to play";
+                    $redis->publish(waiting_players => $json->encode({'player_id' => $waiting_player->id, 'game_id' => $new_game_id}));
+                    $player->start_game($new_game_id);
+                    $waiting_player->start_game($new_game_id);
+                    push @games, Laserpong::Game->new({players => [$player, $waiting_player], game_id => $new_game_id});
                 });
             } else {
-                $self->app->log->debug("no waiting players for player #$new_player_id to play, get in the queue...");
-                push @waiting_players, $new_player_id;
+                # wait in the queue
+                $player->wait;
+                push @waiting_players, $player;
             }
-
-            $self->on('message' => sub {
-                my ($self, $message) = @_;
-                $controller->websocket_dispatch($message);
-            });
         });
     });
-}
-
-sub websocket_dispatch {
-    my $self = shift;
-    my $message = shift;
-    my $json = Mojo::JSON->new;
-    $self->app->log->debug("ws dispatch: " . $message);
 }
 
 1;

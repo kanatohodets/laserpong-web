@@ -1,54 +1,80 @@
 package Laserpong::Game;
 use Mojo::Base 'Mojo::EventEmitter';
+use JSON::XS;
 use Mojo::IOLoop;
-use Mojo::Redis;
 use Data::Dumper;
 use Laserpong::Game::Paddle;
 use Laserpong::Game::Ball;
 
 use constant MAX_SCORE => 11;
 
-has player_ids => undef;
+has players => undef;
 has game_id => undef;
 has ball => undef;
 has paddles => undef;
 
 sub new {
-    my $self = shift->SUPER::new(@_);
+    my $game = shift->SUPER::new(@_);
     my $params = shift;
+    my $json = JSON::XS->new->utf8->allow_blessed(1)->convert_blessed(1);
 
     my $ball = Laserpong::Game::Ball->new();
-    $self->ball($ball);
+    $game->ball($ball);
 
-    my $player1 = Laserpong::Game::Paddle->new({
-        game => $self,
+    my $paddle1 = Laserpong::Game::Paddle->new({
+        game => $game,
         team => 0,
-        player_id => $self->player_ids->[0]
+        player_id => $game->players->[0]->id
     });
 
-    my $player2 = Laserpong::Game::Paddle->new({
-        game => $self,
+    my $paddle2 = Laserpong::Game::Paddle->new({
+        game => $game,
         team => 1,
-        player_id => $self->player_ids->[1]
+        player_id => $game->players->[1]->id
     });
 
-    my @paddles = ($player1, $player2);
+    my @paddles = ($paddle1, $paddle2);
     my @scores = (0, 0);
 
-    $self->paddles(\@paddles);
+    $game->paddles(\@paddles);
     my @entities = (@paddles, $ball);
 
-    $self->on('start_round', sub {
+    $game->on('start_round', sub {
         my $game = shift;
-        print "round starting!...\n";
+        say "round starting!...";
         my $gameframe = 0;
+        map {
+            my $id = $_->id;
+            $_->on('laser', sub {
+                say $id . " fires a laser!";
+            });
+            $_->on('move_up', sub {
+                say $id . " moves down!";
+            });
+            $_->on('move_down', sub {
+                say $id . " moves down!";
+            });
+        } @{$game->players};
+
         my $gameframe_event_id = Mojo::IOLoop->recurring(0.033 => sub {
             my $dt = 1;
             # perl is the bomb.
-            map { $_->update($dt, $gameframe, $ball) } @entities;
+            $_->update($dt, $gameframe, $ball) for @entities;
+
+            #TODO: link the player events with paddle actions. also
+            #websockets->events
             $gameframe++;
+            my $gamestate = {
+                gameframe => $gameframe,
+                player1 => $paddles[0],
+                player2 => $paddles[1],
+                ball => $ball
+            };
+            $gamestate = $json->encode($gamestate);
+            $_->emit('update', $gamestate) for @{$game->players};
+
         });
-        print "my gameframe_event_id is $gameframe_event_id\n";
+        say "my gameframe_event_id is $gameframe_event_id";
         sleep 5;
 
         #end the round, reset the players/ball
@@ -58,23 +84,31 @@ sub new {
             my $self = shift;
             my $scoringTeam = shift;
             my $score = ++$scores[$scoringTeam];
-            print "@scores\n";
+            say "@scores";
             Mojo::IOLoop->remove($gameframe_event_id);
-            map { $_->initialize() } @entities;
+
+            $_->initialize() for @entities;
+
+            map {
+                $_->unsubscribe('laser');
+                $_->unsubscribe('move_down');
+                $_->unsubscribe('move_up');
+            } @{$game->players};
+
             if ($score < MAX_SCORE) {
-                print "new round in 5 seconds ... \n";
+                say "new round in 5 seconds ... ";
                 Mojo::IOLoop->timer(5 => sub {
                     $game->emit('start_round');
                 });
             } else {
-                print "team $scoringTeam won!\n";
+                say "team $scoringTeam won!";
                 $game->emit('gameover', $scoringTeam);
             }
         });
     });
 
-    Mojo::IOLoop->timer(3 => sub { 
-        $self->emit('start_round');
+    Mojo::IOLoop->timer(3 => sub {
+        $game->emit('start_round');
     });
 }
 

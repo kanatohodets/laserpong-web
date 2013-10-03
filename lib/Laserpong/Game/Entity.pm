@@ -1,5 +1,6 @@
 package Laserpong::Game::Entity;
 use Mojo::Base 'Mojo::EventEmitter';
+use JSON::XS;
 
 has name => 'Entity';
 has bounding_shape => 'rect';
@@ -24,6 +25,23 @@ sub bottom {
     my $self = shift;
     return $self->y + $self->radius if $self->bounding_shape eq 'circle';
     return $self->y + $self->height/2 if $self->bounding_shape eq 'rect';
+}
+
+sub guts {
+    my $self = shift;
+    return (
+        x => $self->{x},
+        y => $self->{y},
+        x_vel => $self->{x_vel},
+        y_vel => $self->{y_vel},
+        width => $self->{width},
+        height => $self->{height},
+        team => $self->{team}
+    );
+}
+
+sub TO_JSON {
+    return shift->guts;
 }
 
 1;

@@ -1,5 +1,6 @@
 package Laserpong::Game::Paddle;
 use Mojo::Base 'Laserpong::Game::Entity';
+use JSON::XS;
 use Data::Dumper;
 use Laserpong::Game::Laser;
 use Laserpong::Game::Util qw(collide);
@@ -15,16 +16,20 @@ use constant STARTING_HEIGHT => 2; #13.35;
 use constant Y_VEL => 66.67;
 
 has name => 'Paddle';
-has laser_bank => 10;
+has move_queue => sub { [] };
+has lasers => sub { [] };
+has y_vel => Y_VEL;
+has height => STARTING_HEIGHT;
+has width => WIDTH;
 has player_id => -1;
 
 sub initialize {
     my $self = shift;
-    $self->{move_queue} = [];
-    $self->{lasers} = [];
-    $self->{y_vel} = Y_VEL;
-    $self->{height} = STARTING_HEIGHT;
-    $self->{width} = WIDTH;
+    $self->move_queue([]);
+    $self->lasers([]);
+    $self->y_vel(Y_VEL);
+    $self->height(STARTING_HEIGHT);
+    $self->width(WIDTH);
 
     if ($self->team == 0) {
         $self->x(10);
@@ -48,8 +53,9 @@ sub update {
 
     print "frame: $frame player $id update: $x, $y\n";
 
-    if (scalar @{$self->{move_queue}} > 0) {
-        my $move = shift $self->{move_queue};
+    my $move_queue = $self->move_queue;
+    if (scalar @$move_queue > 0) {
+        my $move = shift $move_queue;
         $y += $move * $self->y_vel * $dt;
     }
 
@@ -67,25 +73,38 @@ sub update {
         $ball->hit_paddle($self->y);
     }
 
-    foreach my $laser (@{$self->{lasers}}) {
+    foreach my $laser (@{$self->lasers}) {
         $laser->update($dt);
     }
 }
 
 sub move_up {
     my $self = shift;
-    push $self->{move_queue}, -1;
+    push @{$self->move_queue}, -1;
 }
 
 sub move_down {
     my $self = shift;
-    push $self->{move_queue}, 1;
+    push @{$self->move_queue}, 1;
 }
 
 sub fire_laser {
     my $self = shift;
-    $self->{laser_bank}--;
-    push $self->{lasers}, Laserpong::Game::Laser->new({x => $self->x, y => $self->y, team => $self->team});
+    my $lasers = $self->lasers;
+    if (scalar @$lasers < LASER_MAX) {
+        push $lasers, Laserpong::Game::Laser->new({x => $self->x, y => $self->y, team => $self->team});
+    }
+}
+
+sub TO_JSON {
+    my $self = shift;
+    my $lasers = $self->lasers;
+    my %lasers = map {$_ => $$lasers[$_]->guts} 0 .. $#$lasers;
+    my $json = {
+        $self->guts,
+        'lasers' => \%lasers
+    };
+    return $json;
 }
 
 1;
