@@ -1,3 +1,5 @@
 % layout 'default';
 % title 'GAME';
 %= javascript '/js/test.js';
+%=t h2 => 'THIS. IS. LASERPONG.'
+<canvas id="game" height="600" width="800" style="outline: solid;"></canvas>

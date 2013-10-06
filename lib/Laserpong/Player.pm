@@ -2,9 +2,9 @@ package Laserpong::Player;
 use Mojo::Redis;
 use JSON::XS;
 use Mojo::Base 'Mojo::EventEmitter';
-use Data::Dumper qw(Dumper);
 
 has id => -1;
+has team_id => -1;
 has ws => sub { \1 };
 has sub => sub { \1 };
 
@@ -20,8 +20,8 @@ sub new {
 }
 
 sub start_game {
-    my ($self, $game_id) = @_;
-    $self->_bind($game_id);
+    my ($self, $game_id, $team_id) = @_;
+    $self->_bind($game_id, $team_id);
 }
 
 sub wait {
@@ -45,6 +45,7 @@ sub wait {
 sub _bind {
     my $self = shift;
     my $game_id = shift;
+    my $team_id = shift;
     my $ws = $self->ws;
     my $id = $self->id;
     my $redis = $self->redis;
@@ -61,6 +62,9 @@ sub _bind {
         my $source_player = $channel_details[2];
         $ws->send($msg) if $source_player != $id;
     });
+
+    $self->team_id($team_id);
+    $ws->send(encode_json({start => {teamID => $team_id}}));
 
     $ws->on(message => sub {
         shift;
@@ -79,10 +83,10 @@ sub _bind {
 
 sub ws_dispatch {
     my ($self, $msg) = @_;
-    #$msg = decode_json $msg;
-    $self->emit('laser');
-    $self->emit('move_up');
-    $self->emit('move_down');
+    my $id = $self->id;
+    say "got a message~ from player $id: $msg";
+    $msg = decode_json $msg;
+    $self->emit($msg->{'action'});
 }
 
 1;

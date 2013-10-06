@@ -47,8 +47,8 @@ sub startup {
 
                     say "waiting player:  . " . $waiting_player->id . ". notifying about a game to play";
                     $redis->publish(waiting_players => $json->encode({'player_id' => $waiting_player->id, 'game_id' => $new_game_id}));
-                    $player->start_game($new_game_id);
-                    $waiting_player->start_game($new_game_id);
+                    $player->start_game($new_game_id, 0);
+                    $waiting_player->start_game($new_game_id, 1);
                     push @games, Laserpong::Game->new({players => [$player, $waiting_player], game_id => $new_game_id});
                 });
             } else {

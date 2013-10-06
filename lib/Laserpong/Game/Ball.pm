@@ -7,7 +7,7 @@ use constant HIT_VELOCITY_INCREMENT => 1.1;
 has radius => 1;
 has name => 'Ball';
 has bounding_shape => 'circle';
-has x_vel => 2;
+has x_vel => 1;
 has y_vel => 0;
 has y_vel_max => sub {
     return shift->y_vel * 5;
@@ -46,7 +46,6 @@ sub update {
     #hit top or bottom wall
     if ($y < $radius || $y + $radius > 100) {
         print "WALL BOUNCE\n\n";
-        sleep 2;
         $y = $y - $y_vel * $dt;
         $y_vel = -1 * $y_vel;
     }
@@ -69,7 +68,6 @@ sub hit_paddle {
     my $self = shift;
     my $struck_paddle_y = shift;
     print "PADDLE bounce!\n\n";
-    sleep 2;
     my $y = $self->y;
     my $y_vel = $self->y_vel;
     my $x_vel = $self->x_vel;

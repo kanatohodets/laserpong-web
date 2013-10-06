@@ -39,19 +39,24 @@ sub new {
     $game->paddles(\@paddles);
     my @entities = (@paddles, $ball);
 
+    $_->emit('init') for @{$game->players};
+
     $game->on('start_round', sub {
         my $game = shift;
         say "round starting!...";
         my $gameframe = 0;
         map {
             my $id = $_->id;
-            $_->on('laser', sub {
+            my $player = $_;
+            $player->on('laser', sub {
                 say $id . " fires a laser!";
             });
-            $_->on('move_up', sub {
-                say $id . " moves down!";
+            $player->on('move_up', sub {
+                $paddles[$player->team_id]->move_up;
+                say $id . " moves up!";
             });
-            $_->on('move_down', sub {
+            $player->on('move_down', sub {
+                $paddles[$player->team_id]->move_down;
                 say $id . " moves down!";
             });
         } @{$game->players};
@@ -66,8 +71,8 @@ sub new {
             $gameframe++;
             my $gamestate = {
                 gameframe => $gameframe,
-                player1 => $paddles[0],
-                player2 => $paddles[1],
+                paddle0 => $paddles[0],
+                paddle1 => $paddles[1],
                 ball => $ball
             };
             $gamestate = $json->encode($gamestate);

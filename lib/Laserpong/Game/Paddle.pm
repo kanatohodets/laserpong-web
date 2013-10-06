@@ -13,7 +13,7 @@ use constant HEAL_AMOUNT => 0.25;
 
 use constant WIDTH => 1.35;
 use constant STARTING_HEIGHT => 2; #13.35;
-use constant Y_VEL => 66.67;
+use constant Y_VEL => 2.67;
 
 has name => 'Paddle';
 has move_queue => sub { [] };
