@@ -12,8 +12,8 @@ use constant HEAL_WAIT => 1;
 use constant HEAL_AMOUNT => 0.25;
 
 use constant WIDTH => 1.35;
-use constant STARTING_HEIGHT => 2; #13.35;
-use constant Y_VEL => 2.67;
+use constant STARTING_HEIGHT => 13; #13.35;
+use constant Y_VEL => 40;
 
 has name => 'Paddle';
 has move_queue => sub { [] };
@@ -51,7 +51,7 @@ sub update {
     my ($self, $dt, $frame, $ball) = @_;
     my ($id, $x, $y) = ($self->player_id, $self->x, $self->y);
 
-    print "frame: $frame player $id update: $x, $y\n";
+    #print "frame: $frame player $id update: $x, $y\n";
 
     my $move_queue = $self->move_queue;
     if (scalar @$move_queue > 0) {
@@ -70,7 +70,7 @@ sub update {
     }
 
     if (collide($self, $ball)) {
-        $ball->hit_paddle($self->y);
+        $ball->hit_paddle($self->y, $dt);
     }
 
     foreach my $laser (@{$self->lasers}) {

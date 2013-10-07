@@ -5,6 +5,7 @@ use Mojo::Base 'Mojo::EventEmitter';
 
 has id => -1;
 has team_id => -1;
+has game_id => -1;
 has ws => sub { \1 };
 has sub => sub { \1 };
 
@@ -75,9 +76,14 @@ sub _bind {
 
     $self->on(update => sub {
         shift;
-        say "sending an update to player $id!";
+        #say "sending an update to player $id!";
         my $json_gamestate = shift;
         $ws->send($json_gamestate);
+    });
+
+    $ws->on(close => sub {
+        shift;
+        $self->emit('exit');
     });
 }
 

@@ -2,7 +2,7 @@ package Laserpong::Game;
 use Mojo::Base 'Mojo::EventEmitter';
 use JSON::XS;
 use Mojo::IOLoop;
-use Data::Dumper;
+use Time::HiRes qw(time);
 use Laserpong::Game::Paddle;
 use Laserpong::Game::Ball;
 
@@ -61,8 +61,11 @@ sub new {
             });
         } @{$game->players};
 
+        my $time = time;
         my $gameframe_event_id = Mojo::IOLoop->recurring(0.033 => sub {
-            my $dt = 1;
+            my $current_time = time;
+            my $dt = $current_time - $time;
+            $time = $current_time;
             # perl is the bomb.
             $_->update($dt, $gameframe, $ball) for @entities;
 
@@ -80,7 +83,6 @@ sub new {
 
         });
         say "my gameframe_event_id is $gameframe_event_id";
-        sleep 5;
 
         #end the round, reset the players/ball
         #count scores, end the game if needed.

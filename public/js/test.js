@@ -12,7 +12,7 @@ window.onload = function () {
     var height = canvas.height;
     var teamID = null;
     var Ball = function () {
-        var radius = 10;
+        var radius = (1 / 100) * height;
         var self = {};
         self.guts = {
             x: 0.5 * width,
@@ -32,17 +32,19 @@ window.onload = function () {
     var Paddle = function (x, y) {
         var self = {};
         self.width = (1.35 / 100) * width;
-        self.height = (2 / 100) * height;
+        self.height = (13 / 100) * height;
         self.guts = {
             x: x,
             y: y
         };
 
         self.draw = function () {
-            ctx.fillRect(self.guts.x, self.guts.y, self.guts.x - self.width / 2, self.guts.y + self.height / 2);
+            ctx.fillRect(self.guts.x - self.width / 2, self.guts.y - self.height / 2, self.height, self.height);
         };
 
         self.update = function (myState) {
+            //self.width = (myState.width / 100) * width;
+            //self.height = (myState.height / 100) * height;
             self.guts.x = (myState.x / 100) * width;
             self.guts.y = (myState.y / 100) * width;
         };
@@ -50,12 +52,12 @@ window.onload = function () {
         return self;
     };
 
-    var paddle0 = new Paddle(100, 100);
-    var paddle1 = new Paddle(300, 300);
+    var paddle0 = new Paddle(0.1 * width, 0.5 * height);
+    var paddle1 = new Paddle(0.9 * width, 0.5 * height);
 
     var ball = Ball();
 
-    window.onkeyup = function (e) {
+    window.onkeydown = function (e) {
         var key = e.keyCode;
         if (teamID) {
             if (key == 87) {
@@ -75,6 +77,7 @@ window.onload = function () {
             teamID = msg['start']['teamID'];
         } else {
             var gamestate = JSON.parse(e.data);
+            console.log(gamestate['paddle0']);
             paddle0.update(gamestate['paddle0']);
             paddle1.update(gamestate['paddle1']);
             ball.update(gamestate['ball']);

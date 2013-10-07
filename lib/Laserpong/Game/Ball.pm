@@ -1,17 +1,19 @@
 package Laserpong::Game::Ball;
 use Mojo::Base 'Laserpong::Game::Entity';
 
-use constant X_VEL => 2;
-use constant HIT_VELOCITY_INCREMENT => 1.1;
+use constant X_VEL => 15;
+use constant HIT_VELOCITY_INCREMENT => 1.5;
+use constant COLLIDE_TIMEOUT => 10;
 
 has radius => 1;
 has name => 'Ball';
 has bounding_shape => 'circle';
-has x_vel => 1;
-has y_vel => 0;
+has x_vel => X_VEL;
+has y_vel => 1;
 has y_vel_max => sub {
     return shift->y_vel * 5;
 };
+has collide_timeout => 0;
 
 has [qw(width height)] => sub {
     shift->radius * 2;
@@ -20,9 +22,10 @@ has [qw(width height)] => sub {
 sub initialize {
     my $self = shift;
     # randomize starting direction
+    $self->collide_timeout(0);
     $self->x(50);
     $self->y(50);
-    $self->x_vel($self->x_vel * rand > 0.5 ? -1 : 1);
+    $self->x_vel(X_VEL * (rand > 0.5 ? -1 : 1));
     $self->y_vel(0);
 
     print "ball init, with x of " . $self->x() . " and y of " . $self->y() . " and x_vel: " . $self->x_vel() . " yvel: " . $self->y_vel() . "\n";
@@ -39,9 +42,14 @@ sub update {
     my $frame = shift;
     my ($x, $y, $radius) = ($self->x, $self->y, $self->radius);
     my ($x_vel, $y_vel) = ($self->x_vel, $self->y_vel);
+    my $collide_timeout = $self->collide_timeout;
+
+    $collide_timeout-- if $collide_timeout > 0;
+    $self->collide_timeout($collide_timeout);
+
     $x = $x + $x_vel * $dt;
     $y = $y + $y_vel * $dt;
-    print "frame $frame ball update: $x, $y\n";
+    #print "frame $frame dt: $dt, ball vel: $x_vel, $y_vel, pos: $x, $y\n";
 
     #hit top or bottom wall
     if ($y < $radius || $y + $radius > 100) {
@@ -67,7 +75,14 @@ sub update {
 sub hit_paddle {
     my $self = shift;
     my $struck_paddle_y = shift;
+    my $frame = shift;
+
+    my $collide_timeout = $self->collide_timeout;
+    return if $collide_timeout > 0;
+    $self->collide_timeout(COLLIDE_TIMEOUT);
+
     print "PADDLE bounce!\n\n";
+    my $x = $self->x;
     my $y = $self->y;
     my $y_vel = $self->y_vel;
     my $x_vel = $self->x_vel;
