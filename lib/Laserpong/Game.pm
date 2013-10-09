@@ -39,7 +39,8 @@ sub new {
     $game->paddles(\@paddles);
     my @entities = (@paddles, $ball);
 
-    $_->emit('init') for @{$game->players};
+    my $players = $game->players;
+    $_->emit('init') for @$players;
 
     $game->on('start_round', sub {
         my $game = shift;
@@ -48,18 +49,22 @@ sub new {
         map {
             my $id = $_->id;
             my $player = $_;
+            my $team_id = $player->team_id;
             $player->on('laser', sub {
                 say $id . " fires a laser!";
             });
             $player->on('move_up', sub {
+                say "player $id, who is on team $team_id, moves up";
                 $paddles[$player->team_id]->move_up;
                 say $id . " moves up!";
             });
             $player->on('move_down', sub {
+
+                say "player $id, who is on team $team_id, moves down";
                 $paddles[$player->team_id]->move_down;
                 say $id . " moves down!";
             });
-        } @{$game->players};
+        } @$players;
 
         my $time = time;
         my $gameframe_event_id = Mojo::IOLoop->recurring(0.033 => sub {
@@ -69,8 +74,6 @@ sub new {
             # perl is the bomb.
             $_->update($dt, $gameframe, $ball) for @entities;
 
-            #TODO: link the player events with paddle actions. also
-            #websockets->events
             $gameframe++;
             my $gamestate = {
                 gameframe => $gameframe,
@@ -79,7 +82,7 @@ sub new {
                 ball => $ball
             };
             $gamestate = $json->encode($gamestate);
-            $_->emit('update', $gamestate) for @{$game->players};
+            $_->emit('update', $gamestate) for @$players;
 
         });
         say "my gameframe_event_id is $gameframe_event_id";
@@ -94,13 +97,10 @@ sub new {
             say "@scores";
             Mojo::IOLoop->remove($gameframe_event_id);
 
-            $_->initialize() for @entities;
-
-            map {
-                $_->unsubscribe('laser');
-                $_->unsubscribe('move_down');
-                $_->unsubscribe('move_up');
-            } @{$game->players};
+            # these are subs rather than events because the game really ought
+            # not to start a new round until they've finished.
+            $_->initialize for @entities;
+            $_->point_scored for @$players;
 
             if ($score < MAX_SCORE) {
                 say "new round in 5 seconds ... ";

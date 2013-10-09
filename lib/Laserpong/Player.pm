@@ -25,6 +25,13 @@ sub start_game {
     $self->_bind($game_id, $team_id);
 }
 
+sub point_scored {
+    my $self = shift;
+    $self->unsubscribe('laser');
+    $self->unsubscribe('move_down');
+    $self->unsubscribe('move_up');
+}
+
 sub wait {
     my $self = shift;
 
@@ -65,7 +72,7 @@ sub _bind {
     });
 
     $self->team_id($team_id);
-    $ws->send(encode_json({start => {teamID => $team_id}}));
+    $ws->send(encode_json({start => {teamID => $team_id, playerID => $id}}));
 
     $ws->on(message => sub {
         shift;
@@ -83,6 +90,7 @@ sub _bind {
 
     $ws->on(close => sub {
         shift;
+        $game_subscription->unsubscribe('message');
         $self->emit('exit');
     });
 }

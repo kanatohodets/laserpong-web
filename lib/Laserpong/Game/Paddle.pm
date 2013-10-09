@@ -59,6 +59,10 @@ sub update {
         $y += $move * $self->y_vel * $dt;
     }
 
+    if (collide($self, $ball)) {
+        $ball->hit_paddle($y, $dt);
+    }
+
     $self->y($y);
     # bounds checking
     if ($self->bottom > 100) {
@@ -67,10 +71,6 @@ sub update {
 
     if ($y < $self->height / 2) {
         $self->y($self->height / 2);
-    }
-
-    if (collide($self, $ball)) {
-        $ball->hit_paddle($self->y, $dt);
     }
 
     foreach my $laser (@{$self->lasers}) {
